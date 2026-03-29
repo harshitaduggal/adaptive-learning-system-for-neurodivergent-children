@@ -62,17 +62,25 @@ Lightweight RL approach suitable for low-data environments
 ```bash
 git clone https://github.com/harshitaduggal/adaptive-learning-system-for-neurodivergent-children.git
 cd adaptive-learning-system-for-neurodivergent-children
-
+```
 Frontend Setup (React Native):
+```bash
 cd frontend
 npm install
+```
 -Run the app:
+```bash
 npx expo start
+```
 
 Backend / RL Module Setup
+```bash
 cd backend
 pip install -r requirements.txt
+```
 -Run the model:
+```bash
 python main.py
+```
 
 
