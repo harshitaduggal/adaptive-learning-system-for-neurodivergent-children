@@ -4,7 +4,7 @@ At each step, the system selects the next learning activity by balancing:
 Exploration (trying new strategies)
 Exploitation (using what works best)
 
-Features
+###Features
 1.Behavior-driven learning
 Uses interaction signals: response time, completion time, engagement
 No pre-trained dataset required
@@ -22,7 +22,7 @@ Visual
 Audio
 Interaction-based tasks
 
-System Architecture
+###System Architecture
 User Interaction → Feature Extraction → Reward Computation
         ↓
  Multi-Armed Bandit Agent
@@ -31,7 +31,7 @@ User Interaction → Feature Extraction → Reward Computation
         ↓
  Next Learning Activity
 
-Data & Inputs
+###Data & Inputs
 
 The system does not use pre-labeled datasets.
 
@@ -45,7 +45,7 @@ These are used to:
 Update the model in real-time
 Compare exploration strategies
 
- Research Contribution
+ ###Research Contribution
 Behavior-driven adaptation without speech dependency
 Comparison of exploration strategies in educational context
 Lightweight RL approach suitable for low-data environments
@@ -63,7 +63,7 @@ Lightweight RL approach suitable for low-data environments
 git clone https://github.com/harshitaduggal/adaptive-learning-system-for-neurodivergent-children.git
 cd adaptive-learning-system-for-neurodivergent-children
 ```
-Frontend Setup (React Native):
+###Frontend Setup (React Native):
 ```bash
 cd frontend
 npm install
@@ -73,7 +73,7 @@ npm install
 npx expo start
 ```
 
-Backend / RL Module Setup
+###Backend / RL Module Setup
 ```bash
 cd backend
 pip install -r requirements.txt
