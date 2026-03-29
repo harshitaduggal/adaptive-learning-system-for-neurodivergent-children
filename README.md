@@ -1,54 +1,78 @@
-<<<<<<< HEAD
-# Welcome to your Expo app 👋
+This project implements a behavior-driven adaptive learning system designed for neurodivergent learners. The system dynamically personalizes educational content using a Multi-Armed Bandit reinforcement learning framework, without relying on pre-labeled datasets.
+Instead of requiring verbal responses, the system adapts based on interaction behavior such as engagement, response time, and accuracy.
+At each step, the system selects the next learning activity by balancing:
+Exploration (trying new strategies)
+Exploitation (using what works best)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Features
+1.Behavior-driven learning
+Uses interaction signals: response time, completion time, engagement
+No pre-trained dataset required
+2.Adaptive content selection
+Dynamically chooses next activity or modality
+3.Reinforcement Learning (MAB)
+Multi-Armed Bandit framework for decision-making
+4.Exploration strategies
+ε-greedy
+Softmax (Boltzmann)
+5.Strategy comparison
+Evaluates performance based on engagement and reward trends
+6.Multimodal learning modules
+Visual
+Audio
+Interaction-based tasks
 
-## Get started
+System Architecture
+User Interaction → Feature Extraction → Reward Computation
+        ↓
+ Multi-Armed Bandit Agent
+        ↓
+ Action Selection (ε-greedy / Softmax)
+        ↓
+ Next Learning Activity
 
-1. Install dependencies
+Data & Inputs
 
-   ```bash
-   npm install
-   ```
+The system does not use pre-labeled datasets.
 
-2. Start the app
+Instead, it collects:
 
-   ```bash
-   npx expo start
-   ```
+Response correctness
+Completion time
+Engagement duration
+Interaction patterns
+These are used to:
+Update the model in real-time
+Compare exploration strategies
 
-In the output, you'll find options to open the app in a
+ Research Contribution
+Behavior-driven adaptation without speech dependency
+Comparison of exploration strategies in educational context
+Lightweight RL approach suitable for low-data environments
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## ⚙️ Installation & Setup
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Prerequisites
+- Node.js (v16+)
+- npm or yarn
+- Python (v3.8+)
+- Expo CLI 
 
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Clone the repository
 ```bash
-npm run reset-project
-```
+git clone https://github.com/harshitaduggal/adaptive-learning-system-for-neurodivergent-children.git
+cd adaptive-learning-system-for-neurodivergent-children
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Frontend Setup (React Native):
+cd frontend
+npm install
+-Run the app:
+npx expo start
 
-## Learn more
+Backend / RL Module Setup
+cd backend
+pip install -r requirements.txt
+-Run the model:
+python main.py
 
-To learn more about developing your project with Expo, look at the following resources:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
-=======
-# adaptive-learning-system-for-neurodivergent-children
->>>>>>> 1a0905ce320d4f1fa4a1466f9c0f7d3d341919cd
