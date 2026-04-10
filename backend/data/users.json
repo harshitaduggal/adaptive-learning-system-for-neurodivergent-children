@@ -1,11 +1,11 @@
 {
     "user1": {
         "global": {
-            "attempts": 42,
+            "attempts": 83,
             "Q": {
-                "flashcard": 0.10999999999999999,
+                "flashcard": -0.16300000000000003,
                 "video": -0.03805000000000003,
-                "audio": 0.10999999999999999
+                "audio": -0.16300000000000003
             },
             "history": [
                 {
@@ -37,12 +37,24 @@
                     "modality": "video",
                     "action": "skip",
                     "reward": -0.8
+                },
+                {
+                    "module": "happy",
+                    "modality": "flashcard",
+                    "action": "skip",
+                    "reward": -0.8
+                },
+                {
+                    "module": "happy",
+                    "modality": "audio",
+                    "action": "skip",
+                    "reward": -0.8
                 }
             ]
         },
         "modules": {
             "happy": {
-                "score": 0.27999999999999997
+                "score": 0.11999999999999994
             }
         }
     }

@@ -11,10 +11,10 @@ def initialize_q():
 
 # Dynamic epsilon (optimized for short sessions)
 def get_epsilon(attempts):
-    if attempts < 3:
-        return 0.4
-    elif attempts < 10:
-        return 0.2
+    if attempts < 20:
+        return 0.5
+    elif attempts < 50:
+        return 0.3
     else:
         return 0.1
 
@@ -60,3 +60,23 @@ def decide_next_content(score, Q, attempts):
         return "game"
 
     return choose_action(Q, attempts)
+
+def apply_skip_avoidance(Q, history):
+    if len(history) < 2:
+        return Q
+
+    recent = history[-3:]  # last 3 interactions
+
+    skip_counts = {}
+
+    for h in recent:
+        if h["action"] == "skip":
+            modality = h["modality"]
+            skip_counts[modality] = skip_counts.get(modality, 0) + 1
+
+    # If skipped twice recently → penalize
+    for modality, count in skip_counts.items():
+        if count >= 2:
+            Q[modality] *= max(0, Q[modality] - 0.2)  # reduce priority
+
+    return Q

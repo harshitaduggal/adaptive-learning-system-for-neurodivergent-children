@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from epsilon_greedy import apply_skip_avoidance
 
 from user_model import (
     initialize_user,
@@ -8,7 +9,8 @@ from user_model import (
     increment_attempts,
     update_q,
     update_history,
-    update_module_score
+    update_module_score,
+    get_global
 )
 
 from epsilon_greedy import (
@@ -32,7 +34,11 @@ def next_content():
 
     # Fetch data
     attempts = get_attempts(user_id)
+
     Q = get_q_values(user_id)
+    global_data = get_global(user_id)
+    history = global_data["history"]
+    Q = apply_skip_avoidance(Q, history)
     score = get_module_score(user_id, module)
 
     # Decide next content
@@ -56,25 +62,26 @@ def feedback():
     modality = data.get("modality")
     action = data.get("action")
 
-    # 🔹 Get Q-values
+    # Get Q-values
     Q = get_q_values(user_id)
     old_q = Q[modality]
 
-    # 🔹 Reward
+    # Reward
     reward = get_reward(action)
 
-    # 🔹 Update Q
+    # Update Q
     new_q = update_q_value(old_q, reward)
+    new_q = max(0, min(1, new_q))
     update_q(user_id, modality, new_q)
 
-    # 🔹 Update module score
+    # Update module score
     old_score = get_module_score(user_id, module)
     new_score = old_score + 0.1 * reward
     new_score = max(0, min(1, new_score))
 
     update_module_score(user_id, module, new_score)
 
-    # 🔹 Update history
+    # Update history
     update_history(user_id, {
         "module": module,
         "modality": modality,
