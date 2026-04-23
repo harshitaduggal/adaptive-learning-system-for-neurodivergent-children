@@ -41,3 +41,19 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env
+
+# Backend runtime data (VERY IMPORTANT)
+backend/data/users.json
+
+# Optional: logs
+*.log

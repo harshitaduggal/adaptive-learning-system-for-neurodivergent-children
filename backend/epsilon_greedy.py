@@ -22,16 +22,16 @@ def get_epsilon(attempts):
 # Reward system (based on behavior)
 def get_reward(event):
     if event == "replay":
-        return 1.0
+        return 0.4
     elif event == "skip":
-        return -0.8   # softer penalty
+        return -0.4   # softer penalty
     else:
-        return 0.2
+        return 0.3
 
 
 # Update Q-values (learning step)
 def update_q_value(old_q, reward, alpha=0.3):
-    return old_q + alpha * (reward - old_q)
+    return round(old_q + alpha * (reward - old_q), 2)
 
 
 # Get best modality based on learned preference

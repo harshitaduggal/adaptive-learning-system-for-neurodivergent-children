@@ -5,6 +5,11 @@ FILE = "data/users.json"
 MAX_HISTORY = 80  # sliding window
 
 
+def round_val(value, decimals=2):
+    """Round to avoid floating-point precision errors."""
+    return round(value, decimals)
+
+
 # 🔹 Load users from file
 def load_users():
     if not os.path.exists(FILE):
@@ -106,7 +111,7 @@ def update_module_score(user_id, module, new_score):
     if module not in users[user_id]["modules"]:
         users[user_id]["modules"][module] = {}
 
-    users[user_id]["modules"][module]["score"] = new_score
+    users[user_id]["modules"][module]["score"] = round_val(new_score)
 
     save_users(users)
 
@@ -118,7 +123,7 @@ def update_q(user_id, action, new_q):
     if user_id not in users:
         users[user_id] = initialize_user(user_id)
 
-    users[user_id]["global"]["Q"][action] = new_q
+    users[user_id]["global"]["Q"][action] = round_val(new_q)
 
     save_users(users)
 

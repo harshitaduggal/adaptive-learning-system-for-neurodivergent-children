@@ -1,0 +1,47 @@
+{
+    "modules": {
+        "two_word_phrases": {
+            "video": [ 
+                {"id": "open_fridge", "url": "https://res.cloudinary.com/difa7rbdt/video/upload/v1775807078/open_fridge_eaetxb.mp4"},
+                {"id": "bye_mummy_papa", "url": "https://res.cloudinary.com/difa7rbdt/video/upload/v1775807077/bye-bye_mummy-papa_f7yq5c.mp4"},
+                {"id": "lights_on_off", "url": "https://res.cloudinary.com/difa7rbdt/video/upload/v1775807077/lights__on-off_vgcnqw.mp4"},
+                {"id": "more_juice", "url": "https://res.cloudinary.com/difa7rbdt/video/upload/v1775807075/more_juice_kkjze5.mp4"},
+                {"id": "drink_water", "url": "https://res.cloudinary.com/difa7rbdt/video/upload/v1775807074/drink_water_z1iz57.mp4"},
+                {"id": "hands_dirty", "url": "https://res.cloudinary.com/difa7rbdt/video/upload/v1775807074/hands_dirty_gnnmre.mp4"}
+            ],
+            "flashcard": [
+                {"id": "door_open", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807074/door_open_r2w4jc.png"},
+                {"id": "door_close", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807074/door_close_miaeus.png"},
+                {"id": "light_on", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807072/light_on_ninau7.png"},
+                {"id": "light_off", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807071/light_off_cmqxeq.png"},
+                {"id": "fan_on", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807070/fan_on_fvhbrh.png"},
+                {"id": "fan_off", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807071/fan_off_rfu17v.png"},
+                {"id": "eyes_open", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807069/eyes_open_sriu6z.png"},
+                {"id": "eyes_close", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807069/eyes_close_nrwbii.png"},
+                {"id": "hands_up", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807068/hands_up_ya946p.png"},
+                {"id": "hands_down", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807067/hands_down_nr2dwj.png"},
+                {"id": "mouth_open", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807066/mouth__open_limeaz.png"},
+                {"id": "mouth_close", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807066/mouth_close_p7gn01.png"},
+                {"id": "sit_down", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807064/sit_down_hnudu0.png"},
+                {"id": "stand_up", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807064/stand_up_s5uxyv.png"},
+                {"id": "hands_dirty", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807064/hands_dirty_ebzafu.png"},
+                {"id": "wash_hands", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807061/wash_hands_lhetfm.png"},
+                {"id": "hands_clean", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807062/hands_clean_bvwxsw.png"},
+                {"id": "brush_teeth", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807061/brush_teeth_etyqth.png"},
+                {"id": "go_out", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807062/go_out_inm7ma.png"},
+                {"id": "come_in", "url": "https://res.cloudinary.com/difa7rbdt/image/upload/v1775807061/come_in_sz0y3t.png"}
+            ],
+            "audio": []
+        },
+
+        "emotions": {
+            "video": [],
+            "flashcard": [
+                {"id": "happy", "url":"https://res.cloudinary.com/difa7rbdt/image/upload/v1775807080/Happy_bf6mjd.png"},
+                {"id": "sad", "url":"https://res.cloudinary.com/difa7rbdt/image/upload/v1775807079/Sad_qhylbe.png"},
+                {"id": "angry", "url":"https://res.cloudinary.com/difa7rbdt/image/upload/v1775807078/Angry_opupsh.png"}
+            ],
+            "audio": []
+        }
+    }
+}
