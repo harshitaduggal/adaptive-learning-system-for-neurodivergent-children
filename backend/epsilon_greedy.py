@@ -1,7 +1,7 @@
 import random
 
 # Available modalities
-ACTIONS = ["flashcard", "video", "audio"]
+ACTIONS = ["flashcard", "video", "audio", "game"]
 
 
 # Initialize Q-values
@@ -49,16 +49,8 @@ def choose_action(Q, attempts):
         return get_best_action(Q)      # exploit
 
 
-# Game trigger (separate from learning logic)
-def should_show_game(attempts):
-    return attempts > 0 and attempts % 4 == 0
-
-
 # FINAL decision function
 def decide_next_content(score, Q, attempts):
-    if should_show_game(attempts):
-        return "game"
-
     return choose_action(Q, attempts)
 
 def apply_skip_avoidance(Q, history):
