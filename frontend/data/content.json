@@ -43,5 +43,9 @@
             ],
             "audio": []
         }
-    }
+    },
+
+    "games": [
+        {"id": "Match_the_Tiles"}
+    ]
 }

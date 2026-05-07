@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import content from '../data/content.json';
+import { gameRegistry } from "./gameRegistry";
+import * as ScreenOrientation from "expo-screen-orientation";
 
 export default function ContentScreen() {
   const router = useRouter();
@@ -19,7 +21,8 @@ export default function ContentScreen() {
   const [pointers, setPointers] = useState({
     video: 0,
     flashcard: 0,
-    audio: 0
+    audio: 0,
+    game: 0
   });
 
   const [videoEnded, setVideoEnded] = useState(false);
@@ -53,8 +56,10 @@ export default function ContentScreen() {
     savePointers();
   }, [pointers, loaded]);
 
-  const items = content["modules"][category][type] || [];
-  const hasContent = items.length > 0;
+const items =
+  type === "game"
+    ? content.games || []
+    : content["modules"][category][type] || [];  const hasContent = items.length > 0;
 
   const index = hasContent ? pointers[type] % items.length : 0;
   const selected = hasContent ? items[index] : null;
@@ -81,7 +86,7 @@ export default function ContentScreen() {
 
       let nextType = data.recommended_content;
 
-      if (nextType === "audio" || nextType === "game") {
+      if (nextType === "audio") {
         nextType = "flashcard";
       }
 
@@ -132,6 +137,24 @@ export default function ContentScreen() {
     return () => sub.remove();
   }, [player]);
 
+  useEffect(() => {
+    const updateOrientation = async () => {
+      if (type === "game") {
+        await ScreenOrientation.lockAsync(
+          ScreenOrientation.OrientationLock.PORTRAIT
+        );
+      } else {
+        await ScreenOrientation.unlockAsync();
+      }
+    };
+
+    updateOrientation();
+
+    return () => {
+      ScreenOrientation.unlockAsync();
+    };
+  }, [type]);
+
   const prefetchNextImages = () => {
     if (!items || items.length === 0) return;
 
@@ -167,18 +190,27 @@ export default function ContentScreen() {
 
   const handleNext = async () => {
     await sendFeedback("skip");
-    const nextIdx = (pointers[type] + 1) % items.length;
-    const nextUrl = items[nextIdx]?.url;
     
-    if (nextUrl) {
-      setCurrentImageUri(nextUrl);
-      Image.prefetch(nextUrl);
+    if (type === "game") {
+      setPointers(prev => ({
+        ...prev,
+        game: prev.game + 1
+      }));
+    } else {
+      const nextIdx = (pointers[type] + 1) % items.length;
+      const nextUrl = items[nextIdx]?.url;
+      
+      if (nextUrl) {
+        setCurrentImageUri(nextUrl);
+        Image.prefetch(nextUrl);
+      }
+      
+      setPointers(prev => ({
+        ...prev,
+        [type]: prev[type] + 1
+      }));
     }
     
-    setPointers(prev => ({
-      ...prev,
-      [type]: prev[type] + 1
-    }));
     setVideoEnded(false);
     setReplayCount(0);
     await fetchNextContent();
@@ -227,6 +259,13 @@ export default function ContentScreen() {
             contentFit="contain"
             cachePolicy="memory-disk"
           />
+        ) : type === "game" ? (
+          (() => {
+            const gameIds = Object.keys(gameRegistry);
+            const currentGameId = gameIds[pointers.game % gameIds.length];
+            const GameComponent = gameRegistry[currentGameId];
+            return GameComponent ? <GameComponent onComplete={handleNext} /> : null;
+          })()
         ) : null}
 
         <View style={styles.bottomControls}>
