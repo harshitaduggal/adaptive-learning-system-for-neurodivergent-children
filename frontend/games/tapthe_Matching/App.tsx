@@ -7,8 +7,6 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ImageBackground,
-  Modal,
-  Animated,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
  
@@ -49,30 +47,19 @@ function createState(pairs: typeof ALL_PAIRS): Record<string, CardState> {
   return obj;
 }
  
-export default function App() {
+export default function App({ onComplete }: { onComplete?: () => void }) {
   const [currentPairs, setCurrentPairs] = useState(() => pickRandom(PAIRS_PER_ROUND));
   const shuffledRight = useMemo(() => shuffle(currentPairs), [currentPairs]);
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [leftStates,  setLeftStates]  = useState<Record<string, CardState>>(() => createState(currentPairs));
   const [rightStates, setRightStates] = useState<Record<string, CardState>>(() => createState(currentPairs));
   const [showConfetti, setShowConfetti] = useState(false);
-  const [showModal,    setShowModal]    = useState(false);
-  const popupScale = useRef(new Animated.Value(0)).current;
- 
+
   const score = Object.values(leftStates).filter((s) => s === 'matched').length;
- 
-  // ── Win trigger popup
+
+  // ── Win trigger (confetti only)
   function triggerWin() {
     setShowConfetti(true);
-    setTimeout(() => {
-      setShowModal(true);
-      Animated.spring(popupScale, {
-        toValue: 1,
-        useNativeDriver: true,
-        friction: 5,  
-        tension: 80,
-      }).start();
-    }, 1500);
   }
  
   // tap left
@@ -114,21 +101,11 @@ export default function App() {
     }
   }
  
-  // Next round
-  function nextRound() {
-    const fresh = pickRandom(PAIRS_PER_ROUND);
-    setCurrentPairs(fresh);
-    setSelectedLeft(null);
-    setLeftStates(createState(fresh));
-    setRightStates(createState(fresh));
-    setShowConfetti(false);
-    setShowModal(false);
-    popupScale.setValue(0);
-  }
- 
-  // Navigate to next window 
+// Navigate to next window 
   function goToNextWindow() {
-    // connecting code will be here
+    if (onComplete) {
+      onComplete();
+    }
   }
  
   // rendering stuff here
@@ -246,71 +223,10 @@ export default function App() {
  
         </View>
       </SafeAreaView>
- 
-      {/* WIN POPUP */}
-      <Modal
-        visible={showModal}
-        transparent={true}
-        animationType="none"
-        statusBarTranslucent={true}
-      >
-        <View style={styles.modalBackdrop}>
-          <Animated.View style={[
-            styles.modalBox,
-            { transform: [{ scale: popupScale }] },
-          ]}>
- 
- 
-            {/* ── BUTTONS ROW ── */}
-            <View style={styles.buttonsRow}>
- 
-              {/*REPLAY BUTTON*/}
-              <TouchableOpacity
-                style={styles.replayBtnBubble}
-                onPress={nextRound}
-                activeOpacity={0.8}
-              >
-                {/* Blue bubble circle */}
-                <View style={styles.replayInnerCircle}>
-                  {/* Shine streak top */}
-                  <View style={styles.replayShineTop} />
-                  {/* Shine dot bottom */}
-                  <View style={styles.replayShineBottom} />
-                  {/* Replay arrow */}
-                  <Text style={styles.replayArrow}>↺</Text>
-                </View>
-                {/* Label under button */}
-                <Text style={styles.replayLabel}>Play Again</Text>
-              </TouchableOpacity>
- 
-              {/* NEXT BUTTON*/}
-              <TouchableOpacity
-                style={styles.replayBtnBubble}
-                onPress={goToNextWindow}
-                activeOpacity={0.8}
-              >
-                {/* Green bubble circle */}
-                <View style={styles.nextInnerCircle}>
-                  {/* Shine streak top */}
-                  <View style={styles.replayShineTop} />
-                  {/* Shine dot bottom */}
-                  <View style={styles.replayShineBottom} />
-                  {/* Next arrow */}
-                  <Text style={styles.replayArrow}>→</Text>
-                </View>
-                {/* Label under button */}
-                <Text style={styles.nextLabel}>Next</Text>
-              </TouchableOpacity>
- 
-            </View>
- 
-          </Animated.View>
-        </View>
-      </Modal>
- 
-    </ImageBackground>
-  );
-}
+  
+     </ImageBackground>
+   );
+ }
  
 // style
 function stateStyle(state: CardState, side: 'left' | 'right') {
@@ -498,137 +414,5 @@ const styles = StyleSheet.create({
   stateWrong: {
     borderColor: '#F87171',      
     backgroundColor: '#FEF2F2',  
-  },
- 
-  // POPUP STYLES
-  
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',  
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
- 
-  modalBox: {
-    width: 300,                  
-    backgroundColor: '#FFFFFF', 
-    borderRadius: 32,            
-    paddingVertical: 32,
-    paddingHorizontal: 28,
-    alignItems: 'center',
-    elevation: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 10 },
-    shadowRadius: 20,
-  },
- 
-  modalScorePill: {
-    backgroundColor: '#F3EEFF',  
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    marginBottom: 24,
-  },
-  modalScoreText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#7C3AED',    
-  },
- 
-  // Buttons row (replay + next side by side) 
-  buttonsRow: {
-    flexDirection: 'row',
-    gap: 28,              
-    alignItems: 'flex-start',
-  },
- 
-  //replay button
-  replayBtnBubble: {
-    alignItems: 'center',
-  },
- 
-  // Blue bubble inside the ring
-  replayInnerCircle: {
-    width: 86,            
-    height: 86,
-    borderRadius: 999,
-    backgroundColor: '#7EC8E3',  
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: '#5BA3C9',     
-  },
- 
-  // next button
-  nextInnerCircle: {
-    width: 86,            
-    height: 86,
-    borderRadius: 999,
-    backgroundColor: '#6EE7B7', 
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: '#34D399',     
-  },
- 
-  // Main shine streak across top (shared by both buttons)
-  replayShineTop: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    width: 58,
-    height: 16,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.65)',  // ✏️ shine brightness
-    transform: [{ rotate: '-25deg' }],
-  },
- 
-  // Small shine dot bottom left (shared by both buttons)
-  replayShineBottom: {
-    position: 'absolute',
-    bottom: 16,
-    left: 12,
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-  },
- 
-  // The ↺ arrow (replay)
-  replayArrow: {
-    fontSize: 44,         
-    color: '#1a1a2e',  
-    fontWeight: '900',
-    marginTop: 4,
-    textShadowColor: '#1a1a2e',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 1,
-  },
- 
-  // "Play Again" label under the circle
-  replayLabel: {
-    marginTop: 10,
-    fontSize: 16,        
-    fontWeight: '900',
-    color: '#e6a3d7',  
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
- 
-  // "Next" label under the circle
-  nextLabel: {
-    marginTop: 10,
-    fontSize: 16,         
-    fontWeight: '900',
-    color: '#34D399',    
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
 });
