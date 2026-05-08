@@ -1,7 +1,7 @@
 import random
 
 # Available modalities
-ACTIONS = ["flashcard", "video", "audio", "game"]
+ACTIONS = ["flashcard", "video", "game"]
 
 
 # Initialize Q-values
@@ -22,9 +22,11 @@ def get_epsilon(attempts):
 # Reward system (based on behavior)
 def get_reward(event):
     if event == "replay":
-        return 0.4
+        return 0.3
     elif event == "skip":
-        return -0.4   # softer penalty
+        return -0.2
+    elif event == "next":
+        return 0.1
     else:
         return 0.3
 
@@ -69,6 +71,6 @@ def apply_skip_avoidance(Q, history):
     # If skipped twice recently → penalize
     for modality, count in skip_counts.items():
         if count >= 2:
-            Q[modality] *= max(0, Q[modality] - 0.2)  # reduce priority
+            Q[modality] = max(0, Q[modality] - 0.2)  # reduce priority
 
     return Q
