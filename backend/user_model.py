@@ -36,7 +36,7 @@ def initialize_user(user_id):
                 "Q": {
                     "flashcard": 0.5,
                     "video": 0.5,
-                    "audio": 0.5
+                    "game": 0.5
                 },
                 "history": []
             },
@@ -53,7 +53,24 @@ def get_user(user_id):
 
     if user_id not in users:
         return initialize_user(user_id)
-
+    
+    # Migrate Q-values for existing users
+    q = users[user_id]["global"]["Q"]
+    modified = False
+    
+    # Add "game" if missing
+    if "game" not in q:
+        q["game"] = 0.5
+        modified = True
+    
+    # Remove "audio" if present (removing this modality)
+    if "audio" in q:
+        del q["audio"]
+        modified = True
+    
+    if modified:
+        save_users(users)
+    
     return users[user_id]
 
 
@@ -65,7 +82,7 @@ def get_global(user_id):
 
 # 🔹 Get Q-values
 def get_q_values(user_id):
-    user = get_user(user_id)
+    user = get_user(user_id)  # This triggers migration if needed
     return user["global"]["Q"]
 
 
@@ -122,7 +139,10 @@ def update_q(user_id, action, new_q):
 
     if user_id not in users:
         users[user_id] = initialize_user(user_id)
-
+    
+    # Ensure Q has the action key (triggers migration for existing users)
+    get_user(user_id)
+    
     users[user_id]["global"]["Q"][action] = round_val(new_q)
 
     save_users(users)
