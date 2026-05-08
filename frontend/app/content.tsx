@@ -21,14 +21,17 @@ export default function ContentScreen() {
   const [pointers, setPointers] = useState({
     video: 0,
     flashcard: 0,
-    audio: 0,
     game: 0
   });
 
-  const [videoEnded, setVideoEnded] = useState(false);
-  const [replayCount, setReplayCount] = useState(0);
-  const [loaded, setLoaded] = useState(false);
-  const [currentImageUri, setCurrentImageUri] = useState("");
+const [videoEnded, setVideoEnded] = useState(false);
+const [replayCount, setReplayCount] = useState(0);
+const [loaded, setLoaded] = useState(false);
+const [currentImageUri, setCurrentImageUri] = useState("");
+const [flashcardTimerDone, setFlashcardTimerDone] = useState(false);
+const [gameFinished, setGameFinished] = useState(false);
+const [gameReplayCount, setGameReplayCount] = useState(0);
+const [gameKey, setGameKey] = useState(0);
 
   useEffect(() => {
     const loadPointers = async () => {
@@ -68,7 +71,8 @@ const items =
     try {
       console.log("Sending POST request...");
 
-      const res = await fetch("http://10.12.31.87:5000/next-content", {
+      // const res = await fetch("http://10.12.31.87:5000/next-content", {
+      const res = await fetch("http://172.20.10.5:5000/next-content", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -86,10 +90,6 @@ const items =
 
       let nextType = data.recommended_content;
 
-      if (nextType === "audio") {
-        nextType = "flashcard";
-      }
-
       setType(nextType);
 
     } catch (err) {
@@ -103,7 +103,21 @@ const items =
 
   const sendFeedback = async (action) => {
     try {
-      await fetch("http://10.12.31.87:5000/feedback", {
+      // Determine action based on modality and state
+      let finalAction = action;
+      if (type === "flashcard") {
+        // Flashcard: skip within 4s, next after 4s
+        finalAction = flashcardTimerDone ? "next" : "skip";
+      } else if (type === "video") {
+        // Video: skip while playing, next after video ends
+        finalAction = videoEnded ? "next" : "skip";
+      } else if (type === "game") {
+        // Game: skip anytime, next after game finishes
+        finalAction = gameFinished ? "next" : "skip";
+      }
+      
+      // await fetch("http://10.12.31.87:5000/feedback", {
+      await fetch("http://172.20.10.5:5000/feedback", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -112,7 +126,7 @@ const items =
           user_id: "user1",
           module: category,
           modality: type,
-          action: action
+          action: finalAction
         })
       });
     } catch (err) {
@@ -171,6 +185,7 @@ const items =
   useEffect(() => {
     if (!loaded || type !== "flashcard" || !hasContent) return;
     setCurrentImageUri(selected?.url || "");
+    setFlashcardTimerDone(false);
     
     const imagesToPreload = [];
     for (let i = 0; i < Math.min(3, items.length); i++) {
@@ -178,14 +193,31 @@ const items =
       imagesToPreload.push(items[idx].url);
     }
     Image.prefetch(imagesToPreload);
+    
+    // 4-second timer
+    const timer = setTimeout(() => {
+      setFlashcardTimerDone(true);
+    }, 4000);
+    
+    return () => clearTimeout(timer);
   }, [loaded, index]);
 
   const handleReplay = async() => {
     await sendFeedback("replay");
-    if (replayCount >= 3 || !selected?.url || type !== "video") return;
-    setReplayCount(prev => prev + 1);
-    setVideoEnded(false);
-    player.replay();
+    
+    if (type === "video") {
+      // Video: max 3 views = 2 replays allowed
+      if (replayCount >= 2 || !selected?.url) return;
+      setReplayCount(prev => prev + 1);
+      setVideoEnded(false);
+      player.replay();
+    } else if (type === "game") {
+      // Game: max 2 plays = 1 replay allowed
+      if (gameReplayCount >= 1) return;
+      setGameReplayCount(prev => prev + 1);
+      setGameFinished(false);
+      setGameKey(prev => prev + 1); // Force re-render of game component
+    }
   };
 
   const handleNext = async () => {
@@ -196,6 +228,8 @@ const items =
         ...prev,
         game: prev.game + 1
       }));
+      setGameFinished(false);
+      setGameReplayCount(0);
     } else {
       const nextIdx = (pointers[type] + 1) % items.length;
       const nextUrl = items[nextIdx]?.url;
@@ -213,6 +247,7 @@ const items =
     
     setVideoEnded(false);
     setReplayCount(0);
+    setFlashcardTimerDone(false);
     await fetchNextContent();
   };
 
@@ -264,12 +299,20 @@ const items =
             const gameIds = Object.keys(gameRegistry);
             const currentGameId = gameIds[pointers.game % gameIds.length];
             const GameComponent = gameRegistry[currentGameId];
-            return GameComponent ? <GameComponent onComplete={handleNext} /> : null;
+            return GameComponent ? (
+              <GameComponent 
+                key={gameKey} 
+                onComplete={() => {
+                  setGameFinished(true);
+                }} 
+              />
+            ) : null;
           })()
         ) : null}
 
         <View style={styles.bottomControls}>
-          {videoEnded && replayCount < 3 && hasContent && type === "video" && (
+          {/* Video: Replay button (left) - shown only after video ends, max 2 replays */}
+          {videoEnded && replayCount < 2 && hasContent && type === "video" && (
             <TouchableOpacity
               style={[styles.controlButton, styles.leftButton]}
               onPress={handleReplay}
@@ -278,12 +321,26 @@ const items =
             </TouchableOpacity>
           )}
 
+          {/* Game: Replay button (left) - shown after game finishes, max 1 replay */}
+          {gameFinished && gameReplayCount < 1 && hasContent && type === "game" && (
+            <TouchableOpacity
+              style={[styles.controlButton, styles.leftButton]}
+              onPress={handleReplay}
+            >
+              <Text style={styles.controlText}>Replay</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Right button: Skip/Next based on modality and state */}
           <TouchableOpacity
             style={[styles.controlButton, styles.rightButton]}
             onPress={handleNext}
           >
             <Text style={styles.controlText}>
-              {videoEnded && type === "video" ? "Next" : "Skip"}
+              {type === "video" ? (!videoEnded ? "Skip" : "Next") :
+               type === "flashcard" ? (!flashcardTimerDone ? "Skip" : "Next") :
+               type === "game" ? (!gameFinished ? "Skip" : "Next") :
+               "Next"}
             </Text>
           </TouchableOpacity>
         </View>
