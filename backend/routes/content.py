@@ -1,5 +1,10 @@
+# Main adaptive learning API routes
+# Handles content recommendation and feedback learning loop
+
 from flask import Blueprint, request, jsonify
 from epsilon_greedy import apply_skip_avoidance
+from selector import select_action
+from logger import log_event
 
 from user_model import (
     initialize_user,
@@ -13,45 +18,52 @@ from user_model import (
     get_global
 )
 
-from epsilon_greedy import (
-    decide_next_content,
-    get_reward,
-    update_q_value
-)
+from epsilon_greedy import get_reward, update_q_value
 
 content_bp = Blueprint("content", __name__)
 
 
 @content_bp.route("/next-content", methods=["POST"])
 def next_content():
+
+    algo = request.args.get("algo", "epsilon")
     data = request.json
 
     user_id = data.get("user_id")
     module = data.get("module")
 
-    # Ensure user exists
     initialize_user(user_id)
 
-    # Fetch data
     attempts = get_attempts(user_id)
 
     Q = get_q_values(user_id)
     global_data = get_global(user_id)
     history = global_data["history"]
+
     Q = apply_skip_avoidance(Q, history)
     score = get_module_score(user_id, module)
 
-    # Decide next content
-    action = decide_next_content(score, Q, attempts)
+    # Use selected algorithm
+    action = select_action(Q, attempts, algo)
 
-    # Increment attempts
+    # Log for research
+    log_event({
+        "user_id": user_id,
+        "attempt": attempts,
+        "algorithm": algo,
+        "Q_values": Q,
+        "selected": action
+    })
+
     increment_attempts(user_id)
 
     return jsonify({
         "module": module,
         "recommended_content": action,
-        "attempts": attempts
+        "attempts": attempts,
+        "algorithm_used": algo
     })
+
 
 @content_bp.route("/feedback", methods=["POST"])
 def feedback():
@@ -62,26 +74,21 @@ def feedback():
     modality = data.get("modality")
     action = data.get("action")
 
-    # Get Q-values
     Q = get_q_values(user_id)
     old_q = Q[modality]
 
-    # Reward
     reward = get_reward(action)
 
-    # Update Q
     new_q = update_q_value(old_q, reward)
     new_q = max(0, min(1, new_q))
     update_q(user_id, modality, new_q)
 
-    # Update module score
     old_score = get_module_score(user_id, module)
     new_score = old_score + 0.1 * reward
     new_score = max(0, min(1, new_score))
 
     update_module_score(user_id, module, new_score)
 
-    # Update history
     update_history(user_id, {
         "module": module,
         "modality": modality,
@@ -94,3 +101,18 @@ def feedback():
         "new_q": new_q,
         "new_score": new_score
     })
+    print("--FEEDBACK CALLED --")
+    print("User:", user_id)
+    print("Modality:", modality)
+    print("Action:", action)
+
+    print("Old Q:", old_q)
+
+    reward = get_reward(action)
+    print("Reward:", reward)
+
+    new_q = update_q_value(old_q, reward)
+    print("New Q BEFORE CLAMP:", new_q)
+
+    new_q = max(0, min(1, new_q))
+    print("New Q AFTER CLAMP:", new_q)
