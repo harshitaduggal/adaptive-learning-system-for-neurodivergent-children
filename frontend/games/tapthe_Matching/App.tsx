@@ -60,6 +60,12 @@ export default function App({ onComplete }: { onComplete?: () => void }) {
   // ── Win trigger (confetti only)
   function triggerWin() {
     setShowConfetti(true);
+    // Call onComplete after confetti finishes (fallSpeed=3000ms + buffer)
+    setTimeout(() => {
+      if (onComplete) {
+        onComplete();
+      }
+    }, 4000);
   }
  
   // tap left
