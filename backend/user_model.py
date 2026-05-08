@@ -1,8 +1,11 @@
+# Handles persistent user state:
+# Q-values, attempts, module scores, and interaction history
+
 import json
 import os
 
 FILE = "data/users.json"
-MAX_HISTORY = 80  # sliding window
+MAX_HISTORY = 80  # for sliding window
 
 
 def round_val(value, decimals=2):
@@ -10,7 +13,7 @@ def round_val(value, decimals=2):
     return round(value, decimals)
 
 
-# 🔹 Load users from file
+# Load users from file
 def load_users():
     if not os.path.exists(FILE):
         return {}
@@ -19,13 +22,13 @@ def load_users():
         return json.load(f)
 
 
-# 🔹 Save users to file
+# Save users to file
 def save_users(data):
     with open(FILE, "w") as f:
         json.dump(data, f, indent=4)
 
 
-# 🔹 Initialize new user
+# Initialize new user
 def initialize_user(user_id):
     users = load_users()
 
@@ -36,7 +39,7 @@ def initialize_user(user_id):
                 "Q": {
                     "flashcard": 0.5,
                     "video": 0.5,
-                    "game": 0.5
+                    "audio": 0.5
                 },
                 "history": []
             },
@@ -47,52 +50,35 @@ def initialize_user(user_id):
     return users[user_id]
 
 
-# 🔹 Get user data
+# Get user data
 def get_user(user_id):
     users = load_users()
 
     if user_id not in users:
         return initialize_user(user_id)
-    
-    # Migrate Q-values for existing users
-    q = users[user_id]["global"]["Q"]
-    modified = False
-    
-    # Add "game" if missing
-    if "game" not in q:
-        q["game"] = 0.5
-        modified = True
-    
-    # Remove "audio" if present (removing this modality)
-    if "audio" in q:
-        del q["audio"]
-        modified = True
-    
-    if modified:
-        save_users(users)
-    
+
     return users[user_id]
 
 
-# 🔹 Get global data
+# Get global data
 def get_global(user_id):
     user = get_user(user_id)
     return user["global"]
 
 
-# 🔹 Get Q-values
+# Get Q-values
 def get_q_values(user_id):
-    user = get_user(user_id)  # This triggers migration if needed
+    user = get_user(user_id)
     return user["global"]["Q"]
 
 
-# 🔹 Get attempts
+# Get attempts
 def get_attempts(user_id):
     user = get_user(user_id)
     return user["global"]["attempts"]
 
 
-# 🔹 NEW: Increment attempts (FIXES YOUR ERROR 🔥)
+# Increment attempts
 def increment_attempts(user_id):
     users = load_users()
 
@@ -104,7 +90,7 @@ def increment_attempts(user_id):
     save_users(users)
 
 
-# 🔹 Get module score (FIXED BUG)
+# Get module score 
 def get_module_score(user_id, module):
     users = load_users()
 
@@ -118,7 +104,7 @@ def get_module_score(user_id, module):
     return users[user_id]["modules"][module]["score"]
 
 
-# 🔹 Update module score
+# Update module score
 def update_module_score(user_id, module, new_score):
     users = load_users()
 
@@ -133,22 +119,19 @@ def update_module_score(user_id, module, new_score):
     save_users(users)
 
 
-# 🔹 Update Q-values
+# Update Q-values
 def update_q(user_id, action, new_q):
     users = load_users()
 
     if user_id not in users:
         users[user_id] = initialize_user(user_id)
-    
-    # Ensure Q has the action key (triggers migration for existing users)
-    get_user(user_id)
-    
+
     users[user_id]["global"]["Q"][action] = round_val(new_q)
 
     save_users(users)
 
 
-# 🔹 Update history (sliding window)
+# to Update history (sliding window)
 def update_history(user_id, event):
     users = load_users()
 
