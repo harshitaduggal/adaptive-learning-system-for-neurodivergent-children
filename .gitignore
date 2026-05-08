@@ -57,3 +57,7 @@ backend/data/users.json
 
 # Optional: logs
 *.log
+
+# Backend runtime data
+backend/data/users.json
+backend/data/experiment_log.json
