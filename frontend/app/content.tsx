@@ -72,7 +72,7 @@ const items =
       console.log("Sending POST request...");
 
       // const res = await fetch("http://10.12.31.87:5000/next-content", {
-      const res = await fetch("http://172.20.10.5:5000/next-content", {
+      const res = await fetch("http://10.92.202.78:5000/next-content", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -117,7 +117,7 @@ const items =
       }
       
       // await fetch("http://10.12.31.87:5000/feedback", {
-      await fetch("http://172.20.10.5:5000/feedback", {
+      await fetch("http://10.92.202.78:5000/feedback", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
