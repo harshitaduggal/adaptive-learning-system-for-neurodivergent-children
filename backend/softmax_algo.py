@@ -4,7 +4,7 @@
 import random
 import math
 
-ACTIONS = ["flashcard", "video", "audio"]
+ACTIONS = ["flashcard", "video", "game"]
 
 def get_temperature(attempts):
     if attempts < 20:
