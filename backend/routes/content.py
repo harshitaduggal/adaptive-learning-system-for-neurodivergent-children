@@ -1,6 +1,7 @@
 # Main adaptive learning API routes
 # Handles content recommendation and feedback learning loop
 
+import os
 from flask import Blueprint, request, jsonify
 from epsilon_greedy import apply_skip_avoidance
 from selector import select_action
@@ -26,7 +27,7 @@ content_bp = Blueprint("content", __name__)
 @content_bp.route("/next-content", methods=["POST"])
 def next_content():
 
-    algo = request.args.get("algo", "epsilon")
+    algo = request.args.get("algo", os.getenv("ALGO", "epsilon"))
     data = request.json
 
     user_id = data.get("user_id")
