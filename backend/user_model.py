@@ -5,7 +5,7 @@ import json
 import os
 
 FILE = "data/users.json"
-MAX_HISTORY = 80  # for sliding window
+MAX_HISTORY = 30  # for sliding window
 
 
 def round_val(value, decimals=2):
@@ -39,7 +39,7 @@ def initialize_user(user_id):
                 "Q": {
                     "flashcard": 0.5,
                     "video": 0.5,
-                    "audio": 0.5
+                    "game": 0.5
                 },
                 "history": []
             },
