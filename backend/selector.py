@@ -1,7 +1,7 @@
 # Central algorithm selector
 # Routes between epsilon, softmax, and hybrid strategies
 
-from epsilon_algo import choose_action as epsilon_choice
+from epsilon_greedy import choose_action as epsilon_choice
 from softmax_algo import choose_action as softmax_choice
 
 def select_action(Q, attempts, algo):
