@@ -46,6 +46,7 @@
     },
 
     "games": [
-        {"id": "Match_the_Tiles"}
+        {"id": "Match_the_Tiles"},
+        {"id": "Scavenger_Hunt"}
     ]
 }
