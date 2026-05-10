@@ -36,9 +36,11 @@ def update_q_value(old_q, reward, alpha=0.3):
     return round(old_q + alpha * (reward - old_q), 2)
 
 
-# Get best modality based on learned preference
+# Get best modality based on learned preference (ties broken randomly)
 def get_best_action(Q):
-    return max(Q, key=Q.get)
+    max_val = max(Q.values())
+    tied = [k for k, v in Q.items() if v == max_val]
+    return random.choice(tied)
 
 
 # Epsilon-greedy selection
