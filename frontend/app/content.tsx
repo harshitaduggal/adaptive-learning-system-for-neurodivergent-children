@@ -15,7 +15,7 @@ export default function ContentScreen() {
   const insets = useSafeAreaInsets();
 
   const category = "two_word_phrases";
-  const [type, setType] = useState("flashcard");
+  const [type, setType] = useState<"flashcard" | "video" | "game">("flashcard");
   const STORAGE_KEY = `pointers_${category}`;
 
   const [pointers, setPointers] = useState({
@@ -40,12 +40,12 @@ const [gameKey, setGameKey] = useState(0);
         if (saved) {
           setPointers(JSON.parse(saved));
         }
-      } catch (e) {}
+      } catch (_e) {}
       setLoaded(true);
     };
 
     loadPointers();
-  }, []);
+  }, [STORAGE_KEY]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -53,11 +53,11 @@ const [gameKey, setGameKey] = useState(0);
     const savePointers = async () => {
       try {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(pointers));
-      } catch (e) {}
+      } catch (_e) {}
     };
 
     savePointers();
-  }, [pointers, loaded]);
+  }, [pointers, loaded, STORAGE_KEY]);
 
 const items =
   type === "game"
@@ -101,7 +101,7 @@ const items =
     fetchNextContent();
   }, []);
 
-  const sendFeedback = async (action) => {
+  const sendFeedback = async (action: string) => {
     try {
       // Determine action based on modality and state
       let finalAction = action;
@@ -169,19 +169,6 @@ const items =
     };
   }, [type]);
 
-  const prefetchNextImages = () => {
-    if (!items || items.length === 0) return;
-
-    const nextImages = [];
-
-    for (let i = 1; i <= 10; i++) {
-      const nextIndex = (index + i) % items.length;
-      nextImages.push(items[nextIndex].url);
-    }
-
-    Image.prefetch(nextImages);
-  };
-
   useEffect(() => {
     if (!loaded || type !== "flashcard" || !hasContent) return;
     setCurrentImageUri(selected?.url || "");
@@ -200,7 +187,7 @@ const items =
     }, 4000);
     
     return () => clearTimeout(timer);
-  }, [loaded, index]);
+  }, [loaded, type, hasContent, items, pointers, index]);
 
   const handleReplay = async() => {
     await sendFeedback("replay");
