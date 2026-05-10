@@ -5,6 +5,7 @@ import json
 import os
 
 FILE = "data/users.json"
+os.makedirs(os.path.dirname(FILE), exist_ok=True)
 MAX_HISTORY = 30  # for sliding window
 
 
@@ -24,6 +25,7 @@ def load_users():
 
 # Save users to file
 def save_users(data):
+    os.makedirs(os.path.dirname(FILE), exist_ok=True)
     with open(FILE, "w") as f:
         json.dump(data, f, indent=4)
 
