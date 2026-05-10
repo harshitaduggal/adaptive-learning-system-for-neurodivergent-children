@@ -531,7 +531,7 @@ function WinModal({ visible, moves, onReplay }: {
 /* ══════════════════════════════════════════════════════════
    MAIN GAME SCREEN
 ══════════════════════════════════════════════════════════ */
-export default function MemoryGame() {
+export default function MemoryGame({ onComplete }: { onComplete?: () => void }) {
   const [cards,      setCards]      = useState<CardData[]>([]);
   const [flipped,    setFlipped]    = useState<number[]>([]);
   const [matched,    setMatched]    = useState<number[]>([]);
@@ -571,7 +571,9 @@ export default function MemoryGame() {
 
   useEffect(() => {
     if (cards.length > 0 && matched.length === cards.length) {
-      setTimeout(() => setWinModal(true), 650);
+      const t1 = setTimeout(() => setWinModal(true), 650);
+      const t2 = setTimeout(() => onComplete?.(), 4000);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
   }, [matched, cards]);
 

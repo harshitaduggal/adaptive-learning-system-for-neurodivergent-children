@@ -413,7 +413,7 @@ function PulsingRing({ color, size }: { color: string; size: number }) {
 }
 
 // ─── Main component ────────────────────────────────────────────────
-export default function EmotionGame() {
+export default function EmotionGame({ onComplete }: { onComplete?: () => void }) {
   const router = useRouter();
 
   const [data,       setData]       = useState<GameItem[]>([]);
@@ -538,8 +538,8 @@ export default function EmotionGame() {
           </Animated.View>
           <Text style={styles.emptyTitle}>No photos yet!</Text>
           <Text style={styles.emptySub}>Ask a grown-up to add family photos from the parent portal.</Text>
-          <TouchableOpacity style={styles.emptyBtn} onPress={() => router.back()} activeOpacity={0.85}>
-            <Text style={styles.emptyBtnText}>Go Back</Text>
+          <TouchableOpacity style={styles.emptyBtn} onPress={() => onComplete?.()} activeOpacity={0.85}>
+            <Text style={styles.emptyBtnText}>OK</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
