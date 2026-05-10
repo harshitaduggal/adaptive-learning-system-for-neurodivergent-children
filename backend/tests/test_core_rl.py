@@ -72,5 +72,10 @@ class TestGetBestAction:
     def test_returns_max_q_modality(self, sample_q):
         assert get_best_action(sample_q) == "flashcard"
 
-    def test_returns_first_on_tie(self):
-        assert get_best_action({"a": 0.5, "b": 0.5}) in ["a", "b"]
+    def test_random_tie_break(self):
+        N = 1000
+        results = [get_best_action({"a": 0.5, "b": 0.5}) for _ in range(N)]
+        assert "a" in results and "b" in results, "Both tied actions should appear"
+
+    def test_no_false_tie_break(self):
+        assert get_best_action({"a": 0.9, "b": 0.5}) == "a"
