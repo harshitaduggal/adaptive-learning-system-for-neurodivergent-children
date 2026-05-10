@@ -1,2 +1,2 @@
-import AllHuntsNavigator from './assets/screens/AllHuntsNavigator';
+import AllHuntsNavigator from './screens/AllHuntsNavigator';
 export default AllHuntsNavigator;

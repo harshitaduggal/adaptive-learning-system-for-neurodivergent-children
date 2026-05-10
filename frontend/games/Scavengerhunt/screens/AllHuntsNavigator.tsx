@@ -63,13 +63,13 @@ function SplashOverlay({ onDone }: { onDone: () => void }) {
 }
 
 //  Root — renders splash then the randomly chosen hunt screen
-export default function AllHuntsNavigator() {
+export default function AllHuntsNavigator({ onComplete }: { onComplete?: () => void }) {
   const [splashDone, setSplashDone] = useState(false);
   const HuntScreen = DAILY_HUNT.screen;
  
   return (
     <>
-      <HuntScreen />
+      <HuntScreen onComplete={onComplete} />
       {!splashDone && <SplashOverlay onDone={() => setSplashDone(true)} />}
     </>
   );

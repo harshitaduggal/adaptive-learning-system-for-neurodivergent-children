@@ -35,7 +35,7 @@ import Svg, { Circle, Ellipse, Line, Path, Rect } from 'react-native-svg';
 // ─── Constants ───────────────────────────────────────────────
  
 const FONT        = 'FredokaOne_400Regular';
-const BG_IMAGE    = require('../in_1.jpeg');
+const BG_IMAGE    = require('../assets/in_1.jpeg');
 const DRAWING_SIZE = 110;
  
 // ─── Theme ───────────────────────────────────────────────────
@@ -363,7 +363,7 @@ function HuntCard({
  
 // ─── Screen ──────────────────────────────────────────────────
  
-export default function IndoorHunt() {
+export default function IndoorHunt({ onComplete }: { onComplete?: () => void }) {
   const [fontsLoaded] = useFonts({ FredokaOne_400Regular });
   const [found, setFound]     = useState<Record<string, boolean>>({});
   const [showWin, setShowWin] = useState(false);
@@ -381,16 +381,11 @@ export default function IndoorHunt() {
     if (HUNT_ITEMS.every(it => next[it.id])) {
       setShowWin(true);
       Animated.timing(winAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+      setTimeout(() => onComplete?.(), 3000);
     } else if (showWin) {
       setShowWin(false);
       winAnim.setValue(0);
     }
-  };
- 
-  const handleReset = () => {
-    setFound({});
-    setShowWin(false);
-    winAnim.setValue(0);
   };
  
   return (
@@ -413,9 +408,6 @@ export default function IndoorHunt() {
             <Animated.View style={[styles.winBox, { opacity: winAnim, backgroundColor: THEME.winBg }]}>
               <Text style={[styles.winTitle, { color: THEME.winTitle }]}>Super finder!</Text>
               <Text style={styles.winSub}>You spotted everything at home! ⭐</Text>
-              <TouchableOpacity style={[styles.resetBtn, { backgroundColor: THEME.resetBtnBg }]} onPress={handleReset}>
-                <Text style={styles.resetTxt}>Play again!</Text>
-              </TouchableOpacity>
             </Animated.View>
           )}
  
@@ -454,9 +446,7 @@ const styles = StyleSheet.create({
   winBox:   { width: '94%', borderRadius: 20, padding: 22, alignItems: 'center', marginBottom: 18 },
   winTitle: { fontSize: 24, fontFamily: FONT, marginBottom: 4 },
   winSub:   { fontSize: 14, color: '#555', marginBottom: 12 },
-  resetBtn: { paddingHorizontal: 28, paddingVertical: 11, borderRadius: 99 },
-  resetTxt: { color: '#fff', fontSize: 17, fontFamily: FONT },
- 
+
   cardList: { width: '100%', gap: 12 },
  
   card: {
