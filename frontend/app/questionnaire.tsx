@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Slider from "@react-native-community/slider";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -13,28 +12,40 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import Svg, { Circle, Defs, Ellipse, Path, Polygon, RadialGradient, Stop } from "react-native-svg";
+import * as ScreenOrientation from "expo-screen-orientation";
 
 const { width } = Dimensions.get("window");
 
-// ─── Design Tokens ─────────────────────────────────────────────
+// ─── Night-Sky Design Tokens (matching AuthScreen) ─────────────
 const T = {
-  purple:      "#7B61FF",
-  purpleLight: "#EDE8FF",
-  purpleMid:   "#C4B8FF",
-  yellow:      "#FFD166",
-  yellowLight: "#FFF6D6",
-  coral:       "#FF6B6B",
-  coralLight:  "#FFE8E8",
-  mint:        "#A8EDEA",
-  teal:        "#06D6A0",
-  orange:      "#FF8C42",
-  bg:          "#F5F0FF",
+  // Night sky (header) palette
+  bg:          "#1A0A4C",
+  bgMid:       "#2D1275",
+  orb1:        "#5B21B6",
+  orb2:        "#4C1D95",
+  purple:      "#7C3AED",
+  purpleLight: "#A78BFA",
+  cardBorder:  "rgba(196,181,253,0.3)",
   white:       "#FFFFFF",
+  textHigh:    "#F3E8FF",
+  textMid:     "#DDD6FE",
+  textSoft:    "#A78BFA",
+  textDim:     "rgba(196,181,253,0.6)",
+  error:       "#F87171",
+  success:     "#34D399",
+  // Body palette
+  bodyBg:      "#F5F0FF",
   text:        "#1A1A3E",
-  textMid:     "#5A5A8A",
-  textSoft:    "#B0A8D8",
+  textBody:    "#5A5A8A",
   border:      "#EAE4FF",
+  optionBg:    "#EDE8FF",
+  optionBorder:"#C4B8FF",
+  // Section accents
+  teal:        "#06D6A0",
+  coral:       "#FF6B6B",
+  yellow:      "#FFD166",
+  yellowAccent:"#C68A00",
 };
 
 // ─── Section groups ─────────────────────────────────────────────
@@ -43,115 +54,186 @@ const SECTIONS = [
     title: "Senses & Comfort", emoji: "🌿",
     color: "#E0FBF4", accent: T.teal,
     questions: [
-      { label: "Bothered by loud sounds?",      valueKey: "soundSensitive",     icon: "🔊" },
-      { label: "Prefers dim or simple screens?", valueKey: "prefersDimUI",       icon: "🌙" },
-      { label: "Distracted by visual clutter?",  valueKey: "clutterSensitive",   icon: "🧩" },
-      { label: "Sensitive to animations?",       valueKey: "animationSensitive", icon: "🎬" },
-      { label: "Bothered by motion effects?",    valueKey: "motionSensitive",    icon: "🌀" },
+      { label: "Bothered by loud sounds?",      valueKey: "soundSensitive",     icon: "" },
+      { label: "Distracted by visual clutter?",  valueKey: "clutterSensitive",   icon: "" },
+      { label: "Sensitive to animations?",       valueKey: "animationSensitive", icon: "" },
+      { label: "Bothered by motion effects?",    valueKey: "motionSensitive",    icon: "" },
     ],
   },
   {
-    title: "Reading & Display", emoji: "📚",
-    color: T.purpleLight, accent: T.purple,
+    title: "Communication", emoji: "",
+    color: "#EDE8FF", accent: T.purple,
     questions: [
-      { label: "Needs bigger text?",        valueKey: "needsLargeText",    icon: "🔡" },
-      { label: "Needs high contrast?",      valueKey: "needsHighContrast", icon: "🎨" },
-      { label: "Prefer warm/yellow tones?", valueKey: "useWarmColors",     icon: "🌅" },
+      { label: "Prefers pictures over words?",        valueKey: "prefersPictures",      icon: "" },
+      { label: "Needs extra time to respond?",         valueKey: "needsResponseTime",    icon: "" },
+      { label: "Repeats words or phrases often?",      valueKey: "hasEcholalia",         icon: "" },
+      { label: "Struggles with back-and-forth chat?",  valueKey: "socialChatDifficulty", icon: "" },
     ],
   },
   {
-    title: "App Experience", emoji: "⚙️",
-    color: T.yellowLight, accent: "#C68A00",
+    title: "Routine & Focus", emoji: "",
+    color: "#FFF6D6", accent: T.yellowAccent,
     questions: [
-      { label: "Reduce animations?", valueKey: "reduceAnimations", icon: "✋" },
-      { label: "Minimal UI layout?", valueKey: "minimalMode",      icon: "🪴" },
-      { label: "Mute all sounds?",   valueKey: "muteSounds",       icon: "🔇" },
+      { label: "Gets upset when routines change?",     valueKey: "routineDependent",     icon: "" },
+      { label: "Has strong special interests?",         valueKey: "specialInterests",     icon: "" },
+      { label: "Difficulty switching between tasks?",   valueKey: "taskSwitchDifficulty", icon: "" },
+      { label: "Benefits from visual schedules?",       valueKey: "usesVisualSchedule",   icon: "" },
+    ],
+  },
+  {
+    title: "App Experience", emoji: "",
+    color: "#FFF0EF", accent: T.coral,
+    questions: [
+      { label: "Reduce animations?",   valueKey: "reduceAnimations",   icon: "" },
+      { label: "Minimal UI layout?",   valueKey: "minimalMode",        icon: "" },
+      { label: "Mute all sounds?",     valueKey: "muteSounds",         icon: "" },
+      { label: "Needs high contrast?", valueKey: "needsHighContrast",  icon: "" },
     ],
   },
 ];
 
-// ─── Twinkling dot ─────────────────────────────────────────────
-function TwinkleDot({ top, left, color, size = 8, diamond = false }: {
-  top: number; left: number; color: string; size?: number; diamond?: boolean;
-}) {
-  const op = useRef(new Animated.Value(0.3)).current;
+// ─── Sparkle (from AuthScreen) ──────────────────────────────────
+function Sparkle({ size, top, left, delay = 0 }: { size: number; top: number; left: number; delay?: number }) {
+  const anim = useRef(new Animated.Value(0.2)).current;
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(op, { toValue: 1,   duration: 900, useNativeDriver: true }),
-        Animated.timing(op, { toValue: 0.3, duration: 900, useNativeDriver: true }),
-      ])
-    ).start();
+    const t = setTimeout(() => {
+      Animated.loop(Animated.sequence([
+        Animated.timing(anim, { toValue: 0.85, duration: 1300, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0.15, duration: 1300, useNativeDriver: true }),
+      ])).start();
+    }, delay);
+    return () => clearTimeout(t);
   }, []);
+  const h = size * 0.25;
+  const s = size;
   return (
-    <Animated.View style={{
-      position: "absolute", top, left, width: size, height: size,
-      borderRadius: diamond ? 2 : size / 2, backgroundColor: color, opacity: op,
-      transform: diamond ? [{ rotate: "45deg" }] : [],
-    }} />
+    <Animated.View style={{ position: "absolute", top, left, opacity: anim }}>
+      <Svg width={s * 2} height={s * 2} viewBox={`0 0 ${s * 2} ${s * 2}`}>
+        <Path
+          d={`M${s} 0 L${s + h} ${s - h} L${s * 2} ${s} L${s + h} ${s + h} L${s} ${s * 2} L${s - h} ${s + h} L0 ${s} L${s - h} ${s - h} Z`}
+          fill="#FFFFFF"
+        />
+      </Svg>
+    </Animated.View>
   );
 }
 
-// ─── Fox Mascot ────────────────────────────────────────────────
-function FoxMascot() {
+// ─── Night Header Background (orbs + crescent from AuthScreen) ──
+function NightHeaderBg() {
   return (
-    <View style={fox.outer}>
-      <View style={fox.tail}><View style={fox.tailTip} /></View>
-      <View style={fox.body}><View style={fox.belly} /></View>
-      <View style={fox.head}>
-        <View style={[fox.ear, fox.earL]}><View style={[fox.earIn]} /></View>
-        <View style={[fox.ear, fox.earR]}><View style={[fox.earIn]} /></View>
-        <View style={[fox.eye, fox.eyeL]}><View style={fox.shine} /></View>
-        <View style={[fox.eye, fox.eyeR]}><View style={fox.shine} /></View>
-        <View style={fox.nose} />
-        <View style={[fox.cheek, fox.cheekL]} />
-        <View style={[fox.cheek, fox.cheekR]} />
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      <View style={{ position: "absolute", width: 220, height: 220, borderRadius: 110, backgroundColor: T.orb1, top: -60, left: -60, opacity: 0.5 }} />
+      <View style={{ position: "absolute", width: 180, height: 180, borderRadius: 90, backgroundColor: T.orb2, top: -40, right: -50, opacity: 0.4 }} />
+      <View style={{ position: "absolute", width: 100, height: 100, borderRadius: 50, backgroundColor: T.purple, bottom: 10, left: "35%", opacity: 0.15 }} />
+      {/* crescent */}
+      <View style={{ position: "absolute", top: 12, left: "60%", opacity: 0.35 }}>
+        <View style={{ width: 36, height: 36, overflow: "hidden" }}>
+          <View style={{ position: "absolute", width: 36, height: 36, borderRadius: 18, backgroundColor: "#C4B5FD" }} />
+          <View style={{ position: "absolute", width: 28, height: 28, borderRadius: 14, backgroundColor: "#1E0A4C", top: -2, left: 8 }} />
+        </View>
       </View>
+      {/* Sparkles */}
+      <Sparkle size={5} top={18}  left={20}           delay={0}   />
+      <Sparkle size={7} top={10}  left={width * 0.72} delay={300} />
+      <Sparkle size={4} top={55}  left={width * 0.55} delay={600} />
+      <Sparkle size={6} top={40}  left={width - 28}   delay={150} />
+      <Sparkle size={3} top={80}  left={10}            delay={900} />
+      <Sparkle size={5} top={30}  left={width * 0.38} delay={450} />
     </View>
   );
 }
-const fox = StyleSheet.create({
-  outer:   { width: 62, height: 62, position: "relative" },
-  tail:    { position: "absolute", bottom: 6, right: -13, width: 20, height: 20, backgroundColor: "#FF8C42", borderRadius: 10, borderBottomLeftRadius: 2, transform: [{ rotate: "30deg" }] },
-  tailTip: { position: "absolute", top: 3, right: 3, width: 7, height: 7, borderRadius: 4, backgroundColor: "#FFD4A8" },
-  body:    { position: "absolute", bottom: 0, left: 8, width: 46, height: 36, backgroundColor: "#FF8C42", borderRadius: 22 },
-  belly:   { position: "absolute", bottom: 2, left: 13, width: 18, height: 18, borderRadius: 9, backgroundColor: "#FFD4A8" },
-  head:    { position: "absolute", top: 0, left: 6, width: 50, height: 40, backgroundColor: "#FF8C42", borderTopLeftRadius: 25, borderTopRightRadius: 25, borderBottomLeftRadius: 19, borderBottomRightRadius: 19 },
-  ear:     { position: "absolute", top: -9, width: 0, height: 0, borderLeftWidth: 8, borderRightWidth: 8, borderBottomWidth: 18, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: "#FF8C42" },
-  earL:    { left: 7 },
-  earR:    { right: 7 },
-  earIn:   { position: "absolute", top: 5, left: -5, width: 0, height: 0, borderLeftWidth: 5, borderRightWidth: 5, borderBottomWidth: 12, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: "#FFD4A8" },
-  eye:     { position: "absolute", top: 13, width: 8, height: 8, borderRadius: 4, backgroundColor: "#2D2D2D" },
-  eyeL:    { left: 10 },
-  eyeR:    { right: 10 },
-  shine:   { position: "absolute", top: 2, right: 1, width: 3, height: 3, borderRadius: 2, backgroundColor: "#fff" },
-  nose:    { position: "absolute", top: 22, left: 21, width: 6, height: 5, borderRadius: 3, backgroundColor: "#2D2D2D" },
-  cheek:   { position: "absolute", top: 20, width: 9, height: 6, borderRadius: 4, backgroundColor: "#FF6B6B", opacity: 0.5 },
-  cheekL:  { left: 5 },
-  cheekR:  { right: 5 },
+
+// ─── Star Mascot (from AuthScreen) ─────────────────────────────
+function StarMascot() {
+  const bobY     = useRef(new Animated.Value(0)).current;
+  const glowAnim = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    Animated.loop(Animated.sequence([
+      Animated.timing(bobY, { toValue: -7, duration: 1100, useNativeDriver: true }),
+      Animated.timing(bobY, { toValue: 0,  duration: 1100, useNativeDriver: true }),
+    ])).start();
+    Animated.loop(Animated.sequence([
+      Animated.timing(glowAnim, { toValue: 1,   duration: 900, useNativeDriver: true }),
+      Animated.timing(glowAnim, { toValue: 0.4, duration: 900, useNativeDriver: true }),
+    ])).start();
+  }, []);
+  const starPath = (() => {
+    const pts: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const angle = (Math.PI / 5) * i - Math.PI / 2;
+      const rad = i % 2 === 0 ? 28 : 12;
+      pts.push(`${34 + rad * Math.cos(angle)},${34 + rad * Math.sin(angle)}`);
+    }
+    return pts.join(" ");
+  })();
+  return (
+    <Animated.View style={{ transform: [{ translateY: bobY }] }}>
+      <View style={{ width: 68, height: 68, alignItems: "center", justifyContent: "center" }}>
+        <Animated.View style={{
+          position: "absolute", width: 68, height: 68, borderRadius: 34, backgroundColor: "#FFD740",
+          opacity: glowAnim,
+          transform: [{ scale: glowAnim.interpolate({ inputRange: [0.4, 1], outputRange: [1, 1.35] }) }],
+        }} />
+        <Svg width={68} height={68} viewBox="0 0 68 68">
+          <Defs>
+            <RadialGradient id="qsG" cx="42%" cy="30%" rx="60%" ry="60%">
+              <Stop offset="0%"   stopColor="#FFE877" />
+              <Stop offset="55%"  stopColor="#FFD166" />
+              <Stop offset="100%" stopColor="#E8A800" />
+            </RadialGradient>
+          </Defs>
+          <Polygon points={starPath} fill="#B87D00" opacity={0.18} transform="translate(1.5,3)" />
+          <Polygon points={starPath} fill="url(#qsG)" />
+          <Ellipse cx={26} cy={23} rx={6} ry={3.5} fill="rgba(255,255,255,0.5)" transform="rotate(-25,26,23)" />
+          <Ellipse cx={27} cy={33} rx={3} ry={3.5} fill="#2D1B69" />
+          <Ellipse cx={41} cy={33} rx={3} ry={3.5} fill="#2D1B69" />
+          <Circle cx={28.3} cy={31.5} r={1} fill="#fff" />
+          <Circle cx={42.3} cy={31.5} r={1} fill="#fff" />
+          <Path d="M27 40 Q34 46 41 40" stroke="#2D1B69" strokeWidth={1.6} fill="none" strokeLinecap="round" />
+          <Ellipse cx={21} cy={38} rx={3.5} ry={2.5} fill="#FF9EC4" opacity={0.5} />
+          <Ellipse cx={47} cy={38} rx={3.5} ry={2.5} fill="#FF9EC4" opacity={0.5} />
+        </Svg>
+      </View>
+    </Animated.View>
+  );
+}
+
+// ─── Speech Bubble ──────────────────────────────────────────────
+function SpeechBubble({ text }: { text: string }) {
+  return (
+    <View style={bub.wrap}>
+      <View style={bub.tail} />
+      <Text style={bub.text}>{text}</Text>
+    </View>
+  );
+}
+const bub = StyleSheet.create({
+  wrap: { backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8, marginLeft: 10, maxWidth: 160, borderWidth: 1, borderColor: "rgba(196,181,253,0.3)" },
+  tail: { position: "absolute", left: -7, top: 14, width: 0, height: 0, borderTopWidth: 6, borderBottomWidth: 6, borderRightWidth: 7, borderTopColor: "transparent", borderBottomColor: "transparent", borderRightColor: "rgba(255,255,255,0.1)" },
+  text: { fontSize: 12, fontWeight: "700", color: "#F3E8FF", lineHeight: 17 },
 });
 
+// ─── Main Screen ────────────────────────────────────────────────
 export default function QuestionnaireScreen() {
   const router = useRouter();
 
   const [form, setForm] = useState({
     soundSensitive: false,
-    prefersDimUI: false,
     clutterSensitive: false,
     animationSensitive: false,
     motionSensitive: false,
-    needsLargeText: false,
-    needsHighContrast: false,
-    hasFavoriteTheme: false,
-    favoriteColor: "",
-    favoriteTheme: "minimal",
-    reduceBrightness: false,
-    useWarmColors: false,
+    prefersPictures: false,
+    needsResponseTime: false,
+    hasEcholalia: false,
+    socialChatDifficulty: false,
+    routineDependent: false,
+    specialInterests: false,
+    taskSwitchDifficulty: false,
+    usesVisualSchedule: false,
     reduceAnimations: false,
     minimalMode: false,
     muteSounds: false,
-    brightnessLevel: 1,
-    textScale: 1,
+    needsHighContrast: false,
   });
 
   type FormType = typeof form;
@@ -159,6 +241,11 @@ export default function QuestionnaireScreen() {
   const headerFade   = useRef(new Animated.Value(0)).current;
   const headerSlide  = useRef(new Animated.Value(-20)).current;
   const mascotBounce = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    return () => { ScreenOrientation.unlockAsync(); };
+  }, []);
 
   useEffect(() => {
     Animated.parallel([
@@ -184,7 +271,7 @@ export default function QuestionnaireScreen() {
     profiles[user!] = form;
     await AsyncStorage.setItem("profiles", JSON.stringify(profiles));
     await AsyncStorage.setItem(`isFirstTime_${user}`, "false");
-    router.replace("/user-selection");
+    router.replace("/parenthome");
   };
 
   const yesCount = Object.entries(form).filter(
@@ -193,44 +280,37 @@ export default function QuestionnaireScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={T.purple} />
+      <StatusBar barStyle="light-content" backgroundColor={T.bg} />
 
-      {/* ── Purple Header ── */}
+      {/* ── Night-Sky Header (matching AuthScreen) ── */}
       <Animated.View style={[styles.header, {
         opacity: headerFade,
         transform: [{ translateY: headerSlide }],
       }]}>
-        {/* Scatter decorations */}
-        <TwinkleDot top={14} left={14}          color={T.yellow} size={10} diamond />
-        <TwinkleDot top={40} left={38}          color={T.coral}  size={7} />
-        <TwinkleDot top={18} left={width - 40}  color={T.mint}   size={8} />
-        <TwinkleDot top={46} left={width - 66}  color={T.teal}   size={6} />
-        <TwinkleDot top={8}  left={width * 0.4} color={T.yellow} size={5} />
+        {/* Night sky background with orbs + sparkles */}
+        <NightHeaderBg />
 
-        {/* Fox + bubble */}
+        {/* Star mascot + bubble */}
         <View style={styles.mascotRow}>
           <Animated.View style={{ transform: [{ translateY: mascotBounce }] }}>
-            <FoxMascot />
+            <StarMascot />
           </Animated.View>
-          <View style={styles.bubble}>
-            <View style={styles.bubbleTail} />
-            <Text style={styles.bubbleText}>{"Let's set\nthings up!"}</Text>
-          </View>
+          <SpeechBubble text={"Let's set\nthings up!"} />
         </View>
 
-        <Text style={styles.headerTitle}>Set Up for Your Child 💜</Text>
+        <Text style={styles.headerTitle}>Set Up for Your Child</Text>
         <Text style={styles.headerSub}>Help us personalise their experience</Text>
 
         {/* Progress pill */}
         <View style={styles.progressPill}>
           <Text style={styles.progressText}>
-            {yesCount} preference{yesCount !== 1 ? "s" : ""} selected ✨
+            {yesCount} preference{yesCount !== 1 ? "s" : ""} selected
           </Text>
         </View>
 
-        {/* Wave */}
+        {/* Wave transition to body */}
         <Svg width={width} height={28} viewBox={`0 0 ${width} 28`} preserveAspectRatio="none" style={{ marginTop: 10 }}>
-          <Path d={`M0 28 Q${width * 0.25} 0 ${width * 0.5} 14 Q${width * 0.75} 28 ${width} 8 L${width} 28Z`} fill={T.bg} />
+          <Path d={`M0 28 Q${width * 0.25} 0 ${width * 0.5} 14 Q${width * 0.75} 28 ${width} 8 L${width} 28Z`} fill={T.bodyBg} />
         </Svg>
       </Animated.View>
 
@@ -242,7 +322,6 @@ export default function QuestionnaireScreen() {
         {SECTIONS.map((section) => (
           <View key={section.title} style={[styles.sectionWrap, { borderColor: section.accent + "44" }]}>
             <View style={[styles.sectionHeader, { backgroundColor: section.color }]}>
-              <Text style={styles.sectionEmoji}>{section.emoji}</Text>
               <Text style={[styles.sectionTitle, { color: section.accent }]}>{section.title}</Text>
             </View>
 
@@ -260,96 +339,20 @@ export default function QuestionnaireScreen() {
           </View>
         ))}
 
-        {/* Fine Tuning sliders */}
-        <View style={[styles.sectionWrap, { borderColor: T.coral + "44" }]}>
-          <View style={[styles.sectionHeader, { backgroundColor: T.coralLight }]}>
-            <Text style={styles.sectionEmoji}>🎛️</Text>
-            <Text style={[styles.sectionTitle, { color: T.coral }]}>Fine Tuning</Text>
-          </View>
-
-          {/* Brightness */}
-          <View style={styles.sliderCard}>
-            <View style={styles.sliderLabelRow}>
-              <Text style={styles.sliderIcon}>☀️</Text>
-              <Text style={styles.sliderLabel}>Screen Brightness</Text>
-              <View style={[styles.sliderBadge, { backgroundColor: T.yellowLight }]}>
-                <Text style={[styles.sliderBadgeText, { color: "#7A5200" }]}>
-                  {Math.round(form.brightnessLevel * 100)}%
-                </Text>
-              </View>
-            </View>
-            <Slider
-              minimumValue={0.5}
-              maximumValue={1}
-              step={0.05}
-              value={form.brightnessLevel}
-              onValueChange={(val) => setValue("brightnessLevel", val)}
-              minimumTrackTintColor={T.yellow}
-              maximumTrackTintColor={T.purpleLight}
-              thumbTintColor={T.yellow}
-              style={{ height: 40 }}
-            />
-            <View style={styles.sliderEndRow}>
-              <Text style={styles.sliderEndText}>🌙 Dim</Text>
-              <Text style={styles.sliderEndText}>☀️ Bright</Text>
-            </View>
-          </View>
-
-          {/* Text Scale */}
-          <View style={styles.sliderCard}>
-            <View style={styles.sliderLabelRow}>
-              <Text style={styles.sliderIcon}>🔡</Text>
-              <Text style={styles.sliderLabel}>Text Size</Text>
-              <View style={[styles.sliderBadge, { backgroundColor: T.purpleLight }]}>
-                <Text style={[styles.sliderBadgeText, { color: T.purple }]}>
-                  {form.textScale.toFixed(1)}×
-                </Text>
-              </View>
-            </View>
-            <Slider
-              minimumValue={1}
-              maximumValue={2}
-              step={0.1}
-              value={form.textScale}
-              onValueChange={(val) => setValue("textScale", val)}
-              minimumTrackTintColor={T.purple}
-              maximumTrackTintColor={T.purpleLight}
-              thumbTintColor={T.purple}
-              style={{ height: 40 }}
-            />
-            <Text style={[styles.previewText, { fontSize: 14 * form.textScale, color: T.text }]}>
-              The quick brown fox 🦊
-            </Text>
-            <View style={styles.sliderEndRow}>
-              <Text style={styles.sliderEndText}>A Normal</Text>
-              <Text style={styles.sliderEndText}>A Large</Text>
-            </View>
-          </View>
-        </View>
-
         <View style={{ height: 110 }} />
       </ScrollView>
 
-      {/* Overlays */}
-      <View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${(1 - form.brightnessLevel) * 0.5})` }]}
-      />
-      {form.useWarmColors && (
-        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(255,220,120,0.22)" }]} />
-      )}
-
-      {/* Save button */}
+      {/* ── Save button ── */}
       <View style={styles.saveContainer}>
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.88}>
-          <Text style={styles.saveText}>Save & Continue 🚀</Text>
+          <Text style={styles.saveText}>Save & Continue</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
-// ─── Question Card ─────────────────────────────────────────────
+// ─── Question Card ──────────────────────────────────────────────
 function QuestionCard({ label, icon, value, onYes, onNo, accentColor }: {
   label: string; icon: string; value: boolean;
   onYes: () => void; onNo: () => void; accentColor: string;
@@ -357,7 +360,6 @@ function QuestionCard({ label, icon, value, onYes, onNo, accentColor }: {
   return (
     <View style={styles.questionCard}>
       <View style={styles.questionRow}>
-        <Text style={styles.questionIcon}>{icon}</Text>
         <Text style={styles.questionLabel}>{label}</Text>
       </View>
       <View style={styles.optionRow}>
@@ -365,9 +367,6 @@ function QuestionCard({ label, icon, value, onYes, onNo, accentColor }: {
           style={[styles.optionBtn, value === true && { backgroundColor: accentColor, borderColor: accentColor }]}
           onPress={onYes} activeOpacity={0.8}
         >
-          <Text style={[styles.optionIcon, value === true && { transform: [{ scale: 1.3 }] }]}>
-            {value === true ? "✅" : "👍"}
-          </Text>
           <Text style={[styles.optionText, value === true && styles.optionTextActive]}>Yes</Text>
         </TouchableOpacity>
 
@@ -375,9 +374,6 @@ function QuestionCard({ label, icon, value, onYes, onNo, accentColor }: {
           style={[styles.optionBtn, value === false && { backgroundColor: T.coral, borderColor: T.coral }]}
           onPress={onNo} activeOpacity={0.8}
         >
-          <Text style={[styles.optionIcon, value === false && { transform: [{ scale: 1.3 }] }]}>
-            {value === false ? "❌" : "👎"}
-          </Text>
           <Text style={[styles.optionText, value === false && styles.optionTextActive]}>No</Text>
         </TouchableOpacity>
       </View>
@@ -387,37 +383,27 @@ function QuestionCard({ label, icon, value, onYes, onNo, accentColor }: {
 
 // ─── Styles ────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: T.bg },
+  safe: { flex: 1, backgroundColor: T.bodyBg },
 
-  // Header
+  // Header — night-sky purple matching AuthScreen
   header: {
-    backgroundColor: T.purple,
-    paddingTop: 48, paddingHorizontal: 20, paddingBottom: 0,
+    backgroundColor: T.bg,
+    paddingTop: 48,
+    paddingHorizontal: 20,
+    paddingBottom: 0,
+    overflow: "hidden",
   },
-  mascotRow:   { flexDirection: "row", alignItems: "flex-end", marginBottom: 10 },
-  bubble: {
-    backgroundColor: T.white, borderRadius: 14,
-    paddingHorizontal: 12, paddingVertical: 8,
-    marginLeft: 10, position: "relative",
-  },
-  bubbleTail: {
-    position: "absolute", left: -7, top: 12,
-    width: 0, height: 0,
-    borderTopWidth: 6, borderBottomWidth: 6, borderRightWidth: 7,
-    borderTopColor: "transparent", borderBottomColor: "transparent",
-    borderRightColor: T.white,
-  },
-  bubbleText:   { fontSize: 12, fontWeight: "700", color: "#5B3FCC", lineHeight: 17 },
-  headerTitle:  { fontSize: 22, fontWeight: "900", color: T.white, lineHeight: 28 },
-  headerSub:    { fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 4, marginBottom: 10 },
+  mascotRow:  { flexDirection: "row", alignItems: "flex-end", marginBottom: 10 },
+  headerTitle:{ fontSize: 22, fontWeight: "900", color: T.textHigh, lineHeight: 28 },
+  headerSub:  { fontSize: 12, color: T.textDim, marginTop: 4, marginBottom: 10 },
 
   progressPill: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(167,139,250,0.18)",
     borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6,
-    borderWidth: 1.5, borderColor: "rgba(255,255,255,0.3)",
+    borderWidth: 1.5, borderColor: T.cardBorder,
   },
-  progressText: { fontSize: 12, fontWeight: "800", color: T.white },
+  progressText: { fontSize: 12, fontWeight: "800", color: T.textHigh },
 
   // Scroll body
   scrollContent: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 20 },
@@ -434,7 +420,6 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 8,
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  sectionEmoji: { fontSize: 20 },
   sectionTitle: { fontSize: 15, fontWeight: "900", letterSpacing: 0.2 },
 
   // Question card
@@ -442,33 +427,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 12,
     borderTopWidth: 1, borderTopColor: T.border,
   },
-  questionRow:  { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
-  questionIcon: { fontSize: 18 },
-  questionLabel:{ flex: 1, fontSize: 14, fontWeight: "700", color: T.text, lineHeight: 20 },
+  questionRow:   { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+  questionLabel: { flex: 1, fontSize: 14, fontWeight: "700", color: T.text, lineHeight: 20 },
 
   optionRow: { flexDirection: "row", gap: 10 },
   optionBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
     paddingVertical: 10, borderRadius: 14,
-    backgroundColor: T.purpleLight, borderWidth: 2, borderColor: T.purpleMid,
+    backgroundColor: T.optionBg, borderWidth: 2, borderColor: T.optionBorder,
   },
-  optionIcon:       { fontSize: 16 },
-  optionText:       { fontSize: 14, fontWeight: "800", color: T.textMid },
+  optionText:       { fontSize: 14, fontWeight: "800", color: T.textBody },
   optionTextActive: { color: T.white },
-
-  // Slider
-  sliderCard: {
-    paddingHorizontal: 14, paddingVertical: 12,
-    borderTopWidth: 1, borderTopColor: T.border,
-  },
-  sliderLabelRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
-  sliderIcon:     { fontSize: 18 },
-  sliderLabel:    { flex: 1, fontSize: 14, fontWeight: "800", color: T.text },
-  sliderBadge:    { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3 },
-  sliderBadgeText:{ fontSize: 12, fontWeight: "900" },
-  sliderEndRow:   { flexDirection: "row", justifyContent: "space-between", marginTop: 2 },
-  sliderEndText:  { fontSize: 11, color: T.textSoft, fontWeight: "700" },
-  previewText:    { textAlign: "center", fontWeight: "700", marginVertical: 8 },
 
   // Save
   saveContainer: {
@@ -480,7 +449,7 @@ const styles = StyleSheet.create({
   saveBtn: {
     backgroundColor: T.purple, borderRadius: 22, paddingVertical: 16,
     alignItems: "center",
-    shadowColor: T.purple, shadowOpacity: 0.45, shadowRadius: 16,
+    shadowColor: T.purple, shadowOpacity: 0.55, shadowRadius: 16,
     shadowOffset: { width: 0, height: 5 }, elevation: 10,
   },
   saveText: { color: T.white, fontWeight: "900", fontSize: 17, letterSpacing: 0.3 },
